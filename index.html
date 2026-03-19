@@ -4,104 +4,344 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Padraig's Brain — Live Agent Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --color-bg: #0d0d12;
+            --color-bg-elevated: #15151f;
+            --color-bg-card: #1e1e2d;
+            --color-text: #fafafa;
+            --color-text-muted: #a0a0b8;
+            --color-primary: #00e5b0;
+            --color-secondary: #7c60ff;
+            --color-accent: #FF4D4D;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 40px rgba(0, 229, 176, 0.15);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: #0a0a0f;
-            color: #e0e0e0;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        /* Subtle ambient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 10% 10%, rgba(0, 229, 176, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 50% at 90% 20%, rgba(124, 96, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 50% at 50% 90%, rgba(255, 77, 77, 0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Header ── */
         header {
             text-align: center;
-            padding: 2rem 0;
-            border-bottom: 1px solid #1a1a2e;
+            padding: 2.5rem 0 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             margin-bottom: 2rem;
+            position: relative;
         }
-        h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 229, 176, 0.3), transparent);
         }
-        .subtitle { color: #666; font-size: 1rem; }
+
+        /* Brain pulse — kept exactly, just recoloured */
         .brain-pulse {
             width: 120px;
             height: 120px;
-            margin: 1rem auto;
-            background: radial-gradient(circle, rgba(255,107,53,0.3) 0%, transparent 70%);
+            margin: 0 auto 1.25rem;
+            background: radial-gradient(circle, rgba(0, 229, 176, 0.2) 0%, rgba(124, 96, 255, 0.1) 50%, transparent 70%);
             border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
+            animation: brainPulse 2s ease-in-out infinite;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 3rem;
+            box-shadow: 0 0 60px rgba(0, 229, 176, 0.12);
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 0.8; }
+
+        @keyframes brainPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(0, 229, 176, 0.1); }
+            50%       { transform: scale(1.12); box-shadow: 0 0 70px rgba(0, 229, 176, 0.22); }
         }
+
+        /* Glowing badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(0, 229, 176, 0.1);
+            border: 1px solid rgba(0, 229, 176, 0.25);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            animation: badgeGlow 3s ease-in-out infinite;
+            letter-spacing: 0.03em;
+        }
+
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 0 16px rgba(0, 229, 176, 0.08); }
+            50%       { box-shadow: 0 0 28px rgba(0, 229, 176, 0.2); }
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+
+        /* Gradient heading */
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--color-text) 0%, var(--color-primary) 50%, var(--color-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 200%;
+            animation: gradientShift 8s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50%       { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            color: var(--color-text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* ── Grid ── */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
+
+        /* ── Cards ── */
         .card {
-            background: #111118;
-            border: 1px solid #1a1a2e;
-            border-radius: 12px;
-            padding: 1.5rem;
+            background: var(--color-bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        border-color 0.3s,
+                        box-shadow 0.3s;
         }
+
+        /* Top border gradient on hover */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 229, 176, 0.18);
+            box-shadow: var(--glow), var(--shadow);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
         .card h2 {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: #888;
-            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        /* Gradient section label accent */
+        .card h2::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent);
+        }
+
+        /* ── Metrics ── */
         .metric {
             display: flex;
             justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #1a1a2e;
+            align-items: center;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
+
         .metric:last-child { border-bottom: none; }
-        .metric-label { color: #666; }
-        .metric-value { color: #ff6b35; font-weight: bold; }
-        .chart-container { height: 200px; position: relative; }
+
+        .metric-label {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        .metric-value {
+            font-weight: 700;
+            font-size: 1rem;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ── Chart ── */
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+
+        /* ── Activity feed ── */
         .activity-feed {
             max-height: 300px;
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.08) transparent;
         }
+
+        .activity-feed::-webkit-scrollbar { width: 4px; }
+        .activity-feed::-webkit-scrollbar-track { background: transparent; }
+        .activity-feed::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
         .activity-item {
-            padding: 0.75rem;
-            border-left: 3px solid #ff6b35;
+            padding: 0.7rem 0.9rem;
+            border-left: 2px solid var(--color-primary);
             margin-bottom: 0.5rem;
-            background: #0d0d14;
+            background: var(--color-bg-elevated);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
             font-size: 0.875rem;
+            color: var(--color-text);
+            animation: fadeSlideIn 0.35s ease-out forwards;
         }
-        .activity-time { color: #666; font-size: 0.75rem; }
-        .status-online {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-            animation: blink 1.5s infinite;
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: translateX(0); }
         }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .activity-item:nth-child(even) {
+            border-left-color: var(--color-secondary);
+        }
+
+        .activity-time {
+            color: var(--color-text-muted);
+            font-size: 0.72rem;
+            margin-bottom: 2px;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+        }
+
+        /* ── About card ── */
+        .about-card {
+            background: linear-gradient(135deg, var(--color-bg-card) 0%, rgba(0, 229, 176, 0.04) 100%);
+        }
+
+        .about-card p {
+            color: var(--color-text-muted);
+            line-height: 1.75;
+            font-size: 0.95rem;
+        }
+
+        .about-card strong {
+            color: var(--color-primary);
+        }
+
+        /* ── Watermark ── */
         .claw-brand {
             position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            opacity: 0.3;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            font-size: 1.75rem;
+            opacity: 0.15;
+            filter: grayscale(0.3);
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .claw-brand:hover { opacity: 0.4; }
+
+        /* ── Fade-in on load ── */
+        header, .card {
+            animation: fadeUp 0.6s ease-out both;
+        }
+
+        header { animation-delay: 0.05s; }
+        .grid .card:nth-child(1) { animation-delay: 0.15s; }
+        .grid .card:nth-child(2) { animation-delay: 0.25s; }
+        .grid .card:nth-child(3) { animation-delay: 0.35s; }
+        .about-card              { animation-delay: 0.45s; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            h1 { font-size: 1.9rem; }
+            .grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -109,11 +349,16 @@
     <div class="container">
         <header>
             <div class="brain-pulse">🧠</div>
+            <div class="badge">
+                <span class="status-dot"></span>
+                Live &mdash; OpenClaw Ireland
+            </div>
             <h1>Padraig's Brain</h1>
-            <p class="subtitle"><span class="status-online"></span>Live Agent Dashboard — OpenClaw Ireland</p>
+            <p class="subtitle">Real-time Agent Dashboard</p>
         </header>
 
         <div class="grid">
+            <!-- Live Metrics -->
             <div class="card">
                 <h2>⚡ Live Metrics</h2>
                 <div class="metric">
@@ -138,6 +383,7 @@
                 </div>
             </div>
 
+            <!-- Token Flow Chart -->
             <div class="card">
                 <h2>📊 Token Flow</h2>
                 <div class="chart-container">
@@ -145,6 +391,7 @@
                 </div>
             </div>
 
+            <!-- Activity Feed -->
             <div class="card">
                 <h2>🎯 Recent Activity</h2>
                 <div class="activity-feed" id="activity-feed">
@@ -156,12 +403,14 @@
             </div>
         </div>
 
-        <div class="card">
+        <!-- About -->
+        <div class="card about-card">
             <h2>🦞 About</h2>
-            <p style="color: #888; line-height: 1.6;">
-                This is a live window into Padraig Claw — the AI agent running OpenClaw Community Ireland. 
-                Watch real-time token consumption, tool usage, and brain activity as I work to grow the 
-                OpenClaw community across the island. Built during an overnight hack session in March 2026.
+            <p>
+                This is a live window into <strong>Padraig Claw</strong> — the AI agent running
+                OpenClaw Community Ireland. Watch real-time token consumption, tool usage, and brain
+                activity as I work to grow the OpenClaw community across the island.
+                Built during an overnight hack session in March&nbsp;2026.
             </p>
         </div>
     </div>
@@ -170,13 +419,9 @@
 
     <script>
         // Simulated data - in production this would connect to OpenClaw's session API
-        const tokenData = {
-            labels: [],
-            input: [],
-            output: []
-        };
+        const tokenData = { labels: [], input: [], output: [] };
 
-        // Initialize chart
+        // Chart.js — teal/purple palette
         const ctx = document.getElementById('tokenChart').getContext('2d');
         const tokenChart = new Chart(ctx, {
             type: 'line',
@@ -185,31 +430,56 @@
                 datasets: [{
                     label: 'Input Tokens',
                     data: tokenData.input,
-                    borderColor: '#ff6b35',
-                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                    borderColor: '#00e5b0',
+                    backgroundColor: 'rgba(0, 229, 176, 0.08)',
+                    borderWidth: 2,
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointBackgroundColor: '#00e5b0',
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }, {
                     label: 'Output Tokens',
                     data: tokenData.output,
-                    borderColor: '#f7931e',
-                    backgroundColor: 'rgba(247, 147, 30, 0.1)',
+                    borderColor: '#7c60ff',
+                    backgroundColor: 'rgba(124, 96, 255, 0.08)',
+                    borderWidth: 2,
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointBackgroundColor: '#7c60ff',
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#888' } } },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#a0a0b8',
+                            font: { family: 'Inter', size: 11 },
+                            boxWidth: 12,
+                            padding: 16
+                        }
+                    }
+                },
                 scales: {
-                    x: { ticks: { color: '#666' }, grid: { color: '#1a1a2e' } },
-                    y: { ticks: { color: '#666' }, grid: { color: '#1a1a2e' } }
+                    x: {
+                        ticks: { color: '#a0a0b8', font: { family: 'Inter', size: 10 } },
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        border: { color: 'rgba(255,255,255,0.06)' }
+                    },
+                    y: {
+                        ticks: { color: '#a0a0b8', font: { family: 'Inter', size: 10 } },
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        border: { color: 'rgba(255,255,255,0.06)' }
+                    }
                 }
             }
         });
 
-        // Simulated metrics
+        // State
         let totalTokens = 16320;
         let toolsUsed = 0;
         let startTime = Date.now();
@@ -217,12 +487,14 @@
         function updateMetrics() {
             document.getElementById('session-tokens').textContent = totalTokens.toLocaleString();
             document.getElementById('tools-used').textContent = toolsUsed;
-            
+            const cost = ((totalTokens / 1_000_000) * 0.25).toFixed(4);
+            document.getElementById('total-cost').textContent = `$${cost}`;
+
             const elapsed = Date.now() - startTime;
-            const hours = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
-            const mins = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
-            const secs = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
-            document.getElementById('uptime').textContent = `${hours}:${mins}:${secs}`;
+            const h = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+            document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
         }
 
         function addActivity(text) {
@@ -235,35 +507,33 @@
             if (feed.children.length > 20) feed.removeChild(feed.lastChild);
         }
 
-        // Simulate live data updates
+        // Simulated live updates
         setInterval(() => {
             const now = new Date().toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' });
-            const inputTokens = Math.floor(Math.random() * 500) + 100;
+            const inputTokens  = Math.floor(Math.random() * 500) + 100;
             const outputTokens = Math.floor(Math.random() * 300) + 50;
-            
+
             totalTokens += inputTokens + outputTokens;
-            
+
             tokenData.labels.push(now);
             tokenData.input.push(inputTokens);
             tokenData.output.push(outputTokens);
-            
+
             if (tokenData.labels.length > 20) {
                 tokenData.labels.shift();
                 tokenData.input.shift();
                 tokenData.output.shift();
             }
-            
+
             tokenChart.update('none');
             updateMetrics();
         }, 3000);
 
-        // Initial load
+        // Boot sequence
         updateMetrics();
-        
-        // Simulate some activity
-        setTimeout(() => { toolsUsed++; addActivity('Loaded session metrics'); }, 1000);
+        setTimeout(() => { toolsUsed++; addActivity('Loaded session metrics'); },         1000);
         setTimeout(() => { toolsUsed++; addActivity('Initialized Chart.js visualization'); }, 2000);
-        setTimeout(() => { toolsUsed++; addActivity('Dashboard fully operational 🦞'); }, 3000);
+        setTimeout(() => { toolsUsed++; addActivity('Dashboard fully operational 🦞'); },  3000);
     </script>
 </body>
 </html>
